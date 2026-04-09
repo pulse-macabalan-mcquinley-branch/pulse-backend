@@ -1,0 +1,52 @@
+[tool.black]
+line-length    = 100
+target-version = ["py312"]
+include        = '\\.pyi?$'
+exclude        = '''
+/(
+migrations
+| __pycache__
+| .venv
+| staticfiles
+)/
+'''
+
+[tool.isort]
+profile                   = "black"
+line_length               = 100
+known_django              = ["django", "rest_framework", "djoser", "channels"]
+known_first_party         = ["apps", "config", "core", "celery_app"]
+sections                  = ["FUTURE", "STDLIB", "THIRDPARTY", "DJANGO", "FIRSTPARTY", "LOCALFOLDER"]
+skip_glob                 = ["**/migrations/*.py", ".venv/*"]
+force_sort_within_sections = true
+
+[tool.flake8]
+# Note: flake8 doesn't use pyproject.toml natively.
+# Use .flake8 or setup.cfg instead:
+
+# ── .flake8 ──────────────────────────────────────────────────────
+# [flake8]
+# max-line-length = 100
+# extend-ignore = E203, E266, E501, W503
+# exclude =
+#     .git,
+#     __pycache__,
+#     */migrations/*,
+#     .venv,
+#     staticfiles
+# per-file-ignores =
+#     __init__.py:F401
+#     tests/*:S101
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.development"
+asyncio_mode           = "auto"
+addopts                = "-v --tb=short"
+
+[tool.coverage.run]
+source         = ["apps", "core"]
+omit           = ["*/migrations/*", "*/tests/*", "*/test_*.py"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under   = 80

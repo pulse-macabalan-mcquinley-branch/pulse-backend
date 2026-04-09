@@ -19,6 +19,11 @@ CORS_ALLOWED_ORIGINS = config(
     cast=lambda v: [s.strip() for s in v.split(",") if s.strip()]
 )
 
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",   # ← only in production
+] + MIDDLEWARE
+
 # Security headers
 SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=True, cast=bool)
 SECURE_HSTS_SECONDS = 31536000
@@ -52,6 +57,9 @@ AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazo
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
 AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
+
+# Only in production.py
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Logging
 LOGGING = {
@@ -90,3 +98,4 @@ if SENTRY_DSN:
         send_default_pii=False,
         environment="production",
     )
+

@@ -1,0 +1,27 @@
+[
+  {
+    "model": "posts.tag",
+    "pk": "11111111-1111-1111-1111-111111111101",
+    "fields": { "name": "Python", "slug": "python" }
+  },
+  {
+    "model": "posts.tag",
+    "pk": "11111111-1111-1111-1111-111111111102",
+    "fields": { "name": "Django", "slug": "django" }
+  },
+  {
+    "model": "posts.tag",
+    "pk": "11111111-1111-1111-1111-111111111103",
+    "fields": { "name": "REST API", "slug": "rest-api" }
+  },
+  {
+    "model": "posts.tag",
+    "pk": "11111111-1111-1111-1111-111111111104",
+    "fields": { "name": "DevOps", "slug": "devops" }
+  },
+  {
+    "model": "posts.tag",
+    "pk": "11111111-1111-1111-1111-111111111105",
+    "fields": { "name": "Testing", "slug": "testing" }
+  }
+]

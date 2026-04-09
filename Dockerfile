@@ -1,4 +1,4 @@
-# ── Stage 1: builder ─────────────────────────────────────────────
+# ── Stage 1: builder ─────────────────────────────────────────
 FROM python:3.12-slim AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -8,7 +8,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# System dependencies for psycopg2, Pillow
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
@@ -16,12 +15,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements/base.txt requirements/production.txt ./requirements/
+COPY requirements/base.txt requirements/development.txt ./requirements/
 RUN pip install --upgrade pip \
-    && pip install --prefix=/install -r requirements/production.txt
+    && pip install -r requirements/development.txt
 
+COPY . .
 
-# ── Stage 2: runtime ─────────────────────────────────────────
+EXPOSE 8000
+
+# ── Stage 2: runtime (production only) ───────────────────────
 FROM python:3.12-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -34,19 +36,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 libjpeg62-turbo \
     && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user
 RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 
-COPY --from=builder /install /usr/local
+COPY requirements/base.txt requirements/production.txt ./requirements/
+RUN pip install --upgrade pip \
+    && pip install -r requirements/production.txt
+
 COPY . .
 
 RUN mkdir -p /app/staticfiles /app/media \
     && chown -R appuser:appgroup /app
 
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 USER appuser
 
 EXPOSE 8000
 
-# Entrypoint handles migrations + collectstatic then starts Daphne
-COPY docker/entrypoint.sh /entrypoint.sh
-ENTRYPOINT ["/entrypoint.sh"]`
+ENTRYPOINT ["/entrypoint.sh"]
