@@ -1,0 +1,21 @@
+# ── requirements/development.txt ─────────────────────────────
+-r base.txt
+
+# Debug & dev tools
+django-debug-toolbar==4.4.2
+Werkzeug==3.0.3
+
+# Testing
+pytest==8.3.2
+pytest-django==4.8.0
+pytest-asyncio==0.23.8
+pytest-cov==5.0.0
+factory-boy==3.3.1
+Faker==26.0.0
+model-bakery==1.19.1
+
+# Code quality
+black==24.8.0
+isort==5.13.2
+flake8==7.1.1
+flake8-bugbear==24.4.26
