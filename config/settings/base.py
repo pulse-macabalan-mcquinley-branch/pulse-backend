@@ -34,11 +34,13 @@ THIRD_PARTY_APPS = [
     "drf_spectacular",
     "django_celery_beat",
     "django_celery_results",
+    "phonenumber_field",
 ]
 
 LOCAL_APPS = [
     "apps.users.apps.UsersConfig",
     "apps.notifications.apps.NotificationsConfig",
+    "apps.surveys.apps.SurveysConfig",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -225,3 +227,5 @@ LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
+
+PHONENUMBER_DEFAULT_REGION = "PH"
