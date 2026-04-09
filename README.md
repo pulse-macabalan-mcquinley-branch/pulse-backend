@@ -40,8 +40,8 @@ project/
 ### 1. Clone and configure
 
 ```bash
-git clone https://github.com/your-org/django-boilerplate.git
-cd django-boilerplate
+git clone https://github.com/pulse-macabalan-mcquinley-branch/pulse-backend.git
+cd pulse-backend
 cp .env.example .env
 ```
 
