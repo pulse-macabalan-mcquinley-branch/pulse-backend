@@ -1,4 +1,4 @@
-# Django Production Boilerplate
+# Pulse Backend
 
 A production-ready Django REST API with async WebSocket support, JWT authentication, task queuing, and full Docker orchestration.
 
