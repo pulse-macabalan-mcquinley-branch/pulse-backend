@@ -8,7 +8,8 @@ services:
       target: builder
     command: >
       sh -c "python manage.py makemigrations users notifications --noinput &&
-            python manage.py migrate --noinput"
+           python manage.py migrate --noinput &&
+           python manage.py collectstatic --noinput"
     volumes:
       - .:/app
       - static_vol:/app/staticfiles

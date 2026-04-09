@@ -6,6 +6,11 @@ INSTALLED_APPS += ["debug_toolbar"]  # noqa: F405
 
 MIDDLEWARE = ["debug_toolbar.middleware.DebugToolbarMiddleware"] + MIDDLEWARE  # noqa: F405
 
+# Serve static files in development without whitenoise
+STATIC_URL = "/static/"
+STATICFILES_DIRS = []
+STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+
 INTERNAL_IPS = ["127.0.0.1"]
 
 # Allow all origins in development

@@ -7,6 +7,7 @@ from drf_spectacular.views import (
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 api_v1_urlpatterns = [
     # ── Auth (Djoser + SimpleJWT) ──────────────────────────────
@@ -30,6 +31,7 @@ urlpatterns = [
 # ── Development extras ────────────────────────────────────────
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += staticfiles_urlpatterns()
 
     try:
         import debug_toolbar
