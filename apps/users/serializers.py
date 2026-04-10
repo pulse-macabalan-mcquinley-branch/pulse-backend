@@ -13,7 +13,7 @@ class UserSerializer(serializers.ModelSerializer):
         model  = CustomUser
         fields = [
             "id", "email", "first_name", "last_name", "full_name",
-            "role", "avatar", "is_active", "date_joined",
+            "role", "avatar_url", "is_active", "date_joined",
         ]
         read_only_fields = ["id", "email", "date_joined"]
 
@@ -47,7 +47,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = CustomUser
-        fields = ["first_name", "last_name", "avatar"]
+        fields = ["first_name", "last_name", "avatar_url"]
 
     def update(self, instance, validated_data):
         for attr, value in validated_data.items():
