@@ -87,14 +87,17 @@ class Command(BaseCommand):
     # ── Development seed ──────────────────────────────────────
     def _seed_development(self, user_count, post_count):
         
-        self.stdout.write("  [1/3] Seeding superadmin...")
+        self.stdout.write("  [1/4] Seeding superadmin...")
         self._ensure_superadmin()
 
-        self.stdout.write(f"  [2/3] Seeding {user_count} users...")
+        self.stdout.write(f"  [2/4] Seeding {user_count} users...")
         call_command("seed_users", count=user_count, verbosity=0)
 
-        self.stdout.write("  [3/3] Seeding question types...")
+        self.stdout.write("  [3/4] Seeding question types...")
         call_command("seed_question_types", verbosity=0)
+
+        self.stdout.write("  [4/4] Seeding device types...")
+        call_command("seed_device_types", verbosity=0)
 
         """ self.stdout.write("  [3/4] Seeding notifications...")
         call_command("seed_notifications", verbosity=0) """
@@ -109,6 +112,7 @@ class Command(BaseCommand):
 
         self.stdout.write("  Ensuring superadmin exists...")
         call_command("seed_question_types", verbosity=0)
+        call_command("seed_device_types", verbosity=0)
 
         self._ensure_superadmin()
 
