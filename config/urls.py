@@ -8,11 +8,14 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from apps.users.views import GoogleLoginView
 
 api_v1_urlpatterns = [
     # ── Auth (Djoser + SimpleJWT) ──────────────────────────────
     path("auth/", include("djoser.urls")),
     path("auth/", include("djoser.urls.jwt")),
+    # path("auth/", include("djoser.social.urls")),
+    path("auth/google/", GoogleLoginView.as_view(), name="google-login"),
 
     # ── Users resource ─────────────────────────────────────────
     path("users/", include("apps.users.urls")),

@@ -35,6 +35,7 @@ THIRD_PARTY_APPS = [
     "django_celery_beat",
     "django_celery_results",
     "phonenumber_field",
+    "social_django",
 ]
 
 LOCAL_APPS = [
@@ -111,6 +112,21 @@ CHANNEL_LAYERS = {
     }
 }
 
+# ── AUTHENTICATION ───────────────────────────────────────────────────────
+AUTHENTICATION_BACKENDS = [
+    "social_core.backends.google.GoogleOAuth2",
+    "django.contrib.auth.backends.ModelBackend",
+]
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY    = config("GOOGLE_CLIENT_ID")
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config("GOOGLE_CLIENT_SECRET")
+SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE  = [
+    "openid",
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile",
+]
+SOCIAL_AUTH_GOOGLE_OAUTH2_EXTRA_DATA = ["first_name", "last_name", "picture"]
+
 # ── DRF ───────────────────────────────────────────────────────
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -180,6 +196,12 @@ DJOSER = {
         "current_user": "apps.users.serializers.UserSerializer",
         "user_delete": "djoser.serializers.UserDeleteSerializer",
     },
+    "SOCIAL_AUTH_TOKEN_STRATEGY": "djoser.social.token.jwt.TokenStrategy",
+    "SOCIAL_AUTH_ALLOWED_REDIRECT_URIS": config(
+        "GOOGLE_REDIRECT_URIS",
+        default="http://localhost:3000/auth/google/callback",
+        cast=Csv()
+    ),
 }
 
 # ── Celery ────────────────────────────────────────────────────

@@ -24,7 +24,12 @@ from .serializers import (
     UserSerializer,
     UserUpdateSerializer,
 )
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import get_user_model
+import requests 
 
+User = get_user_model()
 
 class UserViewSet(
     ListModelMixin,
@@ -115,3 +120,74 @@ class UserViewSet(
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(UserSerializer(user).data)
+
+
+class GoogleLoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        access_token = request.data.get("access_token")
+
+        if not access_token:
+            return Response(
+                {"error": "access_token is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # ── Verify token with Google ──────────────────────────
+        google_response = requests.get(
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            headers={"Authorization": f"Bearer {access_token}"}
+        )
+
+        if google_response.status_code != 200:
+            return Response(
+                {"error": "Invalid Google token"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        google_data = google_response.json()
+
+        email      = google_data.get("email")
+        first_name = google_data.get("given_name", "")
+        last_name  = google_data.get("family_name", "")
+        avatar_url = google_data.get("picture", "")
+
+        if not email:
+            return Response(
+                {"error": "Could not retrieve email from Google"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # ── Get or create user ────────────────────────────────
+        user, created = User.objects.get_or_create(
+            email=email,
+            defaults={
+                "first_name": first_name,
+                "last_name":  last_name,
+                "avatar_url": avatar_url,
+                "is_active":  True,
+            }
+        )
+
+        # ── Update avatar if user already exists ──────────────
+        if not created and avatar_url:
+            user.avatar_url = avatar_url
+            user.save(update_fields=["avatar_url"])
+
+        # ── Generate JWT tokens ───────────────────────────────
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            "access":  str(refresh.access_token),
+            "refresh": str(refresh),
+            "created": created,
+            "user": {
+                "id":         str(user.id),
+                "email":      user.email,
+                "first_name": user.first_name,
+                "last_name":  user.last_name,
+                "avatar_url": user.avatar_url,
+                "role":       user.role,
+            }
+        }, status=status.HTTP_200_OK)
