@@ -86,22 +86,30 @@ class Command(BaseCommand):
 
     # ── Development seed ──────────────────────────────────────
     def _seed_development(self, user_count, post_count):
-        self.stdout.write("  [1/4] Seeding superadmin...")
+        
+        self.stdout.write("  [1/3] Seeding superadmin...")
         self._ensure_superadmin()
 
-        self.stdout.write(f"  [2/4] Seeding {user_count} users...")
+        self.stdout.write(f"  [2/3] Seeding {user_count} users...")
         call_command("seed_users", count=user_count, verbosity=0)
 
-        self.stdout.write(f"  [3/4] Seeding {post_count} posts...")
-        call_command("seed_posts", count=post_count, verbosity=0)
+        self.stdout.write("  [3/3] Seeding question types...")
+        call_command("seed_question_types", verbosity=0)
 
-        self.stdout.write("  [4/4] Seeding notifications...")
-        call_command("seed_notifications", verbosity=0)
+        """ self.stdout.write("  [3/4] Seeding notifications...")
+        call_command("seed_notifications", verbosity=0) """
+
+        """ self.stdout.write(f"  [3/5] Seeding {post_count} posts...")
+        call_command("seed_posts", count=post_count, verbosity=0) """
 
     # ── Production seed (safe, idempotent) ───────────────────
     def _seed_production(self):
         self.stdout.write("  Loading production fixtures...")
         call_command("loaddata", "fixtures/production_roles.json")
+
+        self.stdout.write("  Ensuring superadmin exists...")
+        call_command("seed_question_types", verbosity=0)
+
         self._ensure_superadmin()
 
     # ── Helpers ───────────────────────────────────────────────
