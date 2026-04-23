@@ -43,3 +43,8 @@ class QuestionTypeViewSet(ReadOnlyModelViewSet):
     permission_classes = [AllowAny]
     ordering = ["code", "name"]
     pagination_class = None
+    
+    throttle_classes = [
+        AnonBurstThrottle,
+        AnonSustainedThrottle,
+    ]
