@@ -12,6 +12,10 @@ from .models import (
 from rest_framework.permissions import (
     AllowAny,
 )
+from core.throttling import (
+    AnonBurstThrottle,
+    AnonSustainedThrottle
+)
 
 class DeviceTypeViewSet(ReadOnlyModelViewSet):
     """
@@ -23,6 +27,11 @@ class DeviceTypeViewSet(ReadOnlyModelViewSet):
     permission_classes = [AllowAny]
     ordering = ["code", "name"]
     pagination_class = None
+
+    throttle_classes = [
+        AnonBurstThrottle,
+        AnonSustainedThrottle,
+    ]
 
 class QuestionTypeViewSet(ReadOnlyModelViewSet):
     """

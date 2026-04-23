@@ -157,6 +157,7 @@ REST_FRAMEWORK = {
         "burst": "60/min",
         "sustained": "1000/day",
         "anon": "20/min",
+        "anon_sustained": "500/day",
     },
     "EXCEPTION_HANDLER": "core.exceptions.custom_exception_handler",
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",

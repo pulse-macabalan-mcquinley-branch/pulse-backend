@@ -15,6 +15,8 @@ class AnonBurstThrottle(AnonRateThrottle):
     """Unauthenticated burst rate. Default: 20/min."""
     scope = "anon"
 
+class AnonSustainedThrottle(AnonRateThrottle):
+    scope = "anon_sustained"
 
 class AdminBypassThrottle(UserRateThrottle):
     """
