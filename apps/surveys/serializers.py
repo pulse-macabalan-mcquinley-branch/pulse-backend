@@ -221,7 +221,7 @@ class SurveyWriteSerializer(serializers.ModelSerializer):
         ]
 
     # ── Field-level validation ────────────────────────
-    def validate_closes_at(self, value) -> datetime | None:
+    def validate_closes_at(self, value):
         if value and value <= timezone.now():
             raise serializers.ValidationError("Close date must be in the future.")
         return value

@@ -12,7 +12,8 @@ class Command(BaseCommand):
     help = "Seed the users table with fake data."
 
     ROLES_DISTRIBUTION = {
-        CustomUser.Role.USER:       0.80,   # 80% regular users
+        CustomUser.Role.USER:       0.60,   # 60% regular users
+        CustomUser.Role.RESEARCHER: 0.20,   # 20% researchers
         CustomUser.Role.ADMIN:      0.15,   # 15% admins
         CustomUser.Role.SUPERADMIN: 0.05,   # 5%  superadmins
     }
