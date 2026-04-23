@@ -1,5 +1,5 @@
 from rest_framework.permissions import SAFE_METHODS, BasePermission
-
+from apps.users.models import (CustomUser)
 
 class IsOwner(BasePermission):
     """
@@ -70,3 +70,16 @@ class IsOwnerOrAdmin(BasePermission):
             return True
         owner = getattr(obj, "user", None) or getattr(obj, "owner", None)
         return owner == request.user
+    
+class IsResearcher(BasePermission):
+    """Only researchers can write. Object-level enforces ownership."""
+
+    def has_permission(self, request, view):
+        return (
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == CustomUser.Role.RESEARCHER
+        )
+    
+    def has_object_permission(self, request, view, obj):
+        return obj.created_by == request.user
