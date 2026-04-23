@@ -206,6 +206,7 @@ class SurveyWriteSerializer(serializers.ModelSerializer):
             'id',
             'title',
             'description',
+            'status',
             'offline_enabled',
             'allow_anonymous',
             'one_response_per_user',
@@ -216,6 +217,7 @@ class SurveyWriteSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             'id',
+            'status',
             'created_at',
             'updated_at',
         ]
