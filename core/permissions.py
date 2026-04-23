@@ -4,10 +4,10 @@ from apps.users.models import (CustomUser)
 class IsOwner(BasePermission):
     """
     Object-level: only the resource owner may write.
-    Model must have a 'user' FK or 'owner' FK pointing to the user.
+    Model must have a 'created_by' FK or 'owner' FK pointing to the created_by.
     """
 
-    owner_field = "user"  # Override per ViewSet if needed
+    owner_field = "created_by"  # Override per ViewSet if needed
 
     def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS:
