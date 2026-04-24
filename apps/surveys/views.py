@@ -32,6 +32,7 @@ from core.permissions import (
 )
 from django.db.models import Q
 from core.pagination import StandardResultsPagination
+from django.db.models import Count
 
 class DeviceTypeViewSet(ReadOnlyModelViewSet):
     """
@@ -88,7 +89,9 @@ class SurveyViewSet(ModelViewSet):
 
     # ── Queryset scoping ──────────────────────────────────────
     def get_queryset(self):
-        return Survey.objects.all()
+        return Survey.objects.annotate(
+            total_questions=Count('questions')
+        )
 
     def get_serializer_class(self):
         if self.action == "list":

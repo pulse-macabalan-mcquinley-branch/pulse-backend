@@ -158,6 +158,7 @@ class SurveyListSerializer(serializers.ModelSerializer):
     Omits heavy fields like description — fetch those on retrieve.
     """
     created_by = serializers.StringRelatedField(read_only=True)
+    total_questions = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Survey
@@ -169,6 +170,7 @@ class SurveyListSerializer(serializers.ModelSerializer):
             'offline_enabled',
             'allow_anonymous',
             'response_limit',
+            'total_questions',
             'closes_at',
             'created_at',
         ]
