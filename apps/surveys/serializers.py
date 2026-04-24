@@ -202,6 +202,8 @@ class QuestionWriteSerializer(serializers.ModelSerializer):
             'helper_text',
             'display_order',
             'is_required',
+            'min_value',
+            'max_value',
             'max_length',
         ]
         read_only_fields = [
@@ -210,8 +212,10 @@ class QuestionWriteSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         qtype: QuestionType = attrs.get('type')
-        code = qtype.code
+        code = qtype.code.lower()
 
+        min_value = attrs.get('min_value')
+        max_value = attrs.get('max_value')
         max_length=attrs.get('max_length')
 
         # ── TEXT ─────────────────────
@@ -220,6 +224,26 @@ class QuestionWriteSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     "max_length": "Required for text questions"
                 })
+
+            if min_value is not None or max_value is not None:
+                raise serializers.ValidationError(
+                    "min_value/max_value not allowed for text type."
+                )
+            
+        # ── NUMBER / RATING ─────────────────────
+        elif code in ['numeric', 'rating']:
+            if min_value is None or max_value is None:
+                raise serializers.ValidationError(
+                    "min_value and max_value are required."
+                )
+            if min_value > max_value:
+                raise serializers.ValidationError(
+                    "min_value cannot be greater than max_value."
+                )
+            if max_length is not None:
+                raise serializers.ValidationError(
+                    "max_length not allowed for numeric types."
+                )
             
         # ── DEFAULT STRICT MODE ──────
         else:
