@@ -174,6 +174,59 @@ class SurveyListSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
+# ── Question: Write (create) ────────────────────────────
+class QuestionWriteSerializer(serializers.ModelSerializer):
+
+    type = serializers.PrimaryKeyRelatedField(
+        queryset=QuestionType.objects.all()
+    )
+    question_text = serializers.CharField(
+        required=True,
+        min_length=1,
+        max_length=500,
+    )
+    helper_text = serializers.CharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+        max_length=500,
+    )
+    class Meta:
+        model = Question
+        fields = [
+            'id',
+            'type',
+            'question_text',
+            'helper_text',
+            'display_order',
+            'is_required',
+            'max_length',
+        ]
+        read_only_fields = [
+            'id',
+        ]
+
+    def validate(self, attrs):
+        qtype: QuestionType = attrs.get('type')
+        code = qtype.code
+
+        max_length=attrs.get('max_length')
+
+        # ── TEXT ─────────────────────
+        if code == 'text':
+            if not max_length:
+                raise serializers.ValidationError({
+                    "max_length": "Required for text questions"
+                })
+            
+        # ── DEFAULT STRICT MODE ──────
+        else:
+            raise serializers.ValidationError(
+                f"Unsupported question type: {code}"
+            )
+        
+        return attrs
+
 # ── Survey: Write (create) ────────────────────────────
 class SurveyWriteSerializer(serializers.ModelSerializer):
     """
@@ -188,6 +241,7 @@ class SurveyWriteSerializer(serializers.ModelSerializer):
     description = serializers.CharField(
         required=False,
         allow_null=True,
+        allow_blank=True,
         max_length=1000
     )
     response_limit = serializers.IntegerField(
@@ -199,6 +253,8 @@ class SurveyWriteSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True
     )
+
+    questions = QuestionWriteSerializer(many=True, required=False)
 
     class Meta:
         model = Survey
@@ -212,6 +268,7 @@ class SurveyWriteSerializer(serializers.ModelSerializer):
             'one_response_per_user',
             'response_limit',
             'closes_at',
+            'questions',
             'created_at',
             'updated_at',
         ]
@@ -241,4 +298,14 @@ class SurveyWriteSerializer(serializers.ModelSerializer):
             )
 
         return attrs
+    
+    def create(self, validated_data):
+        questions_data = validated_data.pop('questions', [])
+        survey = Survey.objects.create(**validated_data)
+        
+        Question.objects.bulk_create([
+            Question(survey=survey, **q) for q in questions_data
+        ])
+
+        return survey
     
