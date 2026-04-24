@@ -62,6 +62,8 @@ class Survey(SoftDeleteModel):
     published_at = models.DateTimeField(null=True, blank=True)
     closes_at = models.DateTimeField(null=True, blank=True, help_text="Auto-close schedule")
 
+    def __str__(self):
+        return f"{self.title} → {self.created_by.full_name}"
 
 class QuestionType(SoftDeleteModel):
     code = models.CharField(
@@ -137,6 +139,9 @@ class Question(SoftDeleteModel):
         help_text= "Optional question image"
     )
 
+    def __str__(self):
+        return f"{self.type.code}"
+
 class QuestionOption(SoftDeleteModel):
     question = models.ForeignKey(
         Question,
@@ -181,7 +186,7 @@ class QuestionOption(SoftDeleteModel):
                 name="unique_option_value_per_question"
             )
         ]
-        
+
     def __str__(self):
         return f"{self.question} → {self.option_text}"
 

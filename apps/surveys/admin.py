@@ -2,8 +2,13 @@ from django.contrib import admin
 from .models import (
     QuestionType,
     DeviceType,
-    QuestionOption
+    QuestionOption,
+    Survey,
 )
+
+@admin.register(Survey)
+class SurveyAdmin(admin.ModelAdmin):
+    list_display = ("title",)
 
 @admin.register(QuestionType)
 class QuestionTypeAdmin(admin.ModelAdmin):
