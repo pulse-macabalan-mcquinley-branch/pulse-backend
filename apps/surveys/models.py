@@ -137,6 +137,54 @@ class Question(SoftDeleteModel):
         help_text= "Optional question image"
     )
 
+class QuestionOption(SoftDeleteModel):
+    question = models.ForeignKey(
+        Question,
+        db_index=True,
+        related_name="options",
+        on_delete=models.CASCADE
+    )
+    option_text = models.CharField(
+        max_length=500,
+    )
+    option_value = models.CharField(
+        max_length=100,
+        help_text="Stored answer code, e.g. 'employed_private'"
+    )
+    display_order = models.IntegerField(
+        default=0,
+        db_index=True
+    )
+    is_other = models.BooleanField(
+        default=False,
+        help_text="If True, renders an open text input alongside this option"
+    )
+    image_url = models.URLField(
+        max_length=500,
+        blank=True,
+        null=True,
+        help_text="Optional image for visual choice questions"
+    )
+    score_weight = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Used for scored assessments or quizzes"
+    )
+
+    class Meta:
+        ordering = ["display_order"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["question", "option_value"],
+                name="unique_option_value_per_question"
+            )
+        ]
+        
+    def __str__(self):
+        return f"{self.question} → {self.option_text}"
+
 class DeviceType(SoftDeleteModel):
     code = models.CharField(
         max_length=50,
