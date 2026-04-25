@@ -3,6 +3,7 @@ from rest_framework import serializers
 from ..models import (
     QuestionType,
     Question,
+    QuestionOption,
 )
 from .question_option import (
     QuestionOptionSerializer,
@@ -150,3 +151,35 @@ class QuestionWriteSerializer(serializers.ModelSerializer):
             )
         
         return attrs
+    
+    # ── Create ────────────────────────────────────────────────
+    def create(self, validated_data):
+        options_data = validated_data.pop("options", [])
+        question = Question.objects.create(**validated_data)
+        QuestionOption.objects.bulk_create([
+            QuestionOption(question=question, **opt)
+            for opt in options_data
+        ])
+        return question
+
+    # ── Update ────────────────────────────────────────────────
+    def update(self, instance, validated_data):
+        options_data = validated_data.pop("options", None)
+
+        # ── Update flat question fields ───────────────────────
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # ── PATCH with no options key → leave options alone ───
+        if options_data is None:
+            return instance
+
+        # ── PUT/PATCH with options → replace all options ──────
+        instance.options.all().delete()
+        QuestionOption.objects.bulk_create([
+            QuestionOption(question=instance, **opt)
+            for opt in options_data
+        ])
+
+        return instance
