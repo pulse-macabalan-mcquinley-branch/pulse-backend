@@ -7,6 +7,7 @@ from .serializers import (
     QuestionTypeSerializer,
     SurveyListSerializer,
     SurveyWriteSerializer,
+    SurveyDetailSerializer,
 )
 from .models import (
     DeviceType,
@@ -94,9 +95,11 @@ class SurveyViewSet(ModelViewSet):
         )
 
     def get_serializer_class(self):
-        if self.action == "list":
-            return SurveyListSerializer
-        return SurveyWriteSerializer
+        if self.action in ("create"):
+            return SurveyWriteSerializer
+        if self.action == 'retrieve':
+            return SurveyDetailSerializer
+        return SurveyListSerializer
     
     # ── Permissions ───────────────────────────────────────────
     def get_permissions(self):

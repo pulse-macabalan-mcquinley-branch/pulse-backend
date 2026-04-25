@@ -37,11 +37,37 @@ class DeviceTypeSerializer(serializers.ModelSerializer):
             "id"
         ]
 
+# ── Question Option ───────────────────────────────────────────────────────
+class QuestionOptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QuestionOption
+        fields = [
+            'id',
+            'question',
+            'option_text',
+            'option_value',
+            'display_order',
+            'is_other',
+            'image_url',
+            'score_weight',
+            'created_at',
+            'updated_at',
+        ]
+
 # ── Question ───────────────────────────────────────────────────────
+class QuestionTypeMiniSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QuestionType
+        fields = [
+            'id',
+            'name',
+        ]
+
 class QuestionSerializer(serializers.ModelSerializer):
     """ Representation of question """
 
-    type = QuestionTypeSerializer(read_only=True)
+    type = QuestionTypeMiniSerializer(read_only=True)
+    options = QuestionOptionSerializer(many=True, read_only=True)
 
     class Meta:
         model = Question
@@ -56,10 +82,13 @@ class QuestionSerializer(serializers.ModelSerializer):
             "max_value",
             "max_length",
             "image_url",
+            'options',
             "created_at"
         ]
         read_only_fields = [
             "id",
+            'options',
+            'type',
             "created_at",
         ]
 
@@ -131,7 +160,6 @@ class SurveyListSerializer(serializers.ModelSerializer):
 class SurveyDetailSerializer(SurveyListSerializer):
     """Full survey including other attributes — used on retrieve."""
     
-    created_by = UserSerializer(read_only=True)
     questions = QuestionSerializer(many=True, read_only=True)
     responses = ResponseSerializer(many=True, read_only=True)
 
@@ -149,7 +177,7 @@ class SurveyDetailSerializer(SurveyListSerializer):
             "responses",
         ]
         read_only_fields = SurveyListSerializer.Meta.read_only_fields + [
-            "created_by",
+            'created_by'
         ]
 
 # ── Survey: List (lightweight) ──────────────────────────────────
@@ -402,7 +430,7 @@ class SurveyWriteSerializer(serializers.ModelSerializer):
         )
 
         # Second pass: attach options
-        for question, (_,options) in zip(created_questions, question_instances):
+        for question, (_, options) in zip(created_questions, question_instances):
             for opt in options:
                 options_to_create.append(
                     QuestionOption(question=question, **opt)
