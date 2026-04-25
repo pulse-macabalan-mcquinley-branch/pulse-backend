@@ -6,6 +6,7 @@ from .models import (
     Question,
     Response,
     Answer,
+    QuestionOption,
 )
 from ..users.serializers import UserSerializer
 from django.utils import timezone
@@ -176,6 +177,19 @@ class SurveyListSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
+# ── Question Option: Write (create) ────────────────────────────
+class QuestionOptionWriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QuestionOption
+        fields = [
+            'option_text',
+            'option_value',
+            'display_order',
+            'is_other',
+            'image_url',
+            'score_weight',
+        ]
+
 # ── Question: Write (create) ────────────────────────────
 class QuestionWriteSerializer(serializers.ModelSerializer):
 
@@ -193,6 +207,9 @@ class QuestionWriteSerializer(serializers.ModelSerializer):
         allow_blank=True,
         max_length=500,
     )
+
+    options = QuestionOptionWriteSerializer(many=True, required=False)
+
     class Meta:
         model = Question
         fields = [
@@ -205,18 +222,24 @@ class QuestionWriteSerializer(serializers.ModelSerializer):
             'min_value',
             'max_value',
             'max_length',
+            'options',
         ]
         read_only_fields = [
             'id',
         ]
 
     def validate(self, attrs):
-        qtype: QuestionType = attrs.get('type')
+        qtype: QuestionType = attrs.get('type') or getattr(self.instance, 'type', None)
+        options = attrs.get('options')
+
         code = qtype.code.lower()
 
         min_value = attrs.get('min_value')
         max_value = attrs.get('max_value')
-        max_length=attrs.get('max_length')
+        max_length= attrs.get('max_length')
+
+        CHOICE_TYPES = ['single_choice', 'checkboxes',]
+        NUMERIC_TYPES = ['numeric', 'rating', 'scale']
 
         # ── TEXT ─────────────────────
         if code == 'text':
@@ -230,8 +253,8 @@ class QuestionWriteSerializer(serializers.ModelSerializer):
                     "min_value/max_value not allowed for text type."
                 )
             
-        # ── NUMBER / RATING ─────────────────────
-        elif code in ['numeric', 'rating']:
+        # ── NUMBER / RATING / SCALE ─────────────────────
+        elif code in NUMERIC_TYPES:
             if min_value is None or max_value is None:
                 raise serializers.ValidationError(
                     "min_value and max_value are required."
@@ -245,6 +268,24 @@ class QuestionWriteSerializer(serializers.ModelSerializer):
                     "max_length not allowed for numeric types."
                 )
             
+        # ── SINGLE CHOICE / CHECKBOXES ─────────────────────
+        elif code in CHOICE_TYPES:
+            if not options or len(options) < 2:
+                raise serializers.ValidationError({
+                    "options": "At least 2 options are required"
+                })
+            
+            values = [opt.get('option_value') for opt in options]
+            if len(values) != len(set(values)):
+                raise serializers.ValidationError({
+                    "options": "option_value must be unique"
+                })
+            
+            if min_value is not None or max_value is not None or max_length is not None:
+                raise serializers.ValidationError(
+                    "min/max/max_length not allowed for choice types."
+                )
+
         # ── DEFAULT STRICT MODE ──────
         else:
             raise serializers.ValidationError(
@@ -328,10 +369,31 @@ class SurveyWriteSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         questions_data = validated_data.pop('questions', [])
         survey = Survey.objects.create(**validated_data)
+
+        question_instances = []
+        options_to_create = []
+
+        # First pass: create question instances (without saving yet)
+        for q in questions_data:
+            options = q.pop('options', [])
+            question = Question(survey=survey, **q)
+            question_instances.append((question, options))
         
-        Question.objects.bulk_create([
-            Question(survey=survey, **q) for q in questions_data
-        ])
+        # Bulk create questions
+        created_questions = Question.objects.bulk_create(
+            [q for q, _ in question_instances]
+        )
+
+        # Second pass: attach options
+        for question, (_,options) in zip(created_questions, question_instances):
+            for opt in options:
+                options_to_create.append(
+                    QuestionOption(question=question, **opt)
+                )
+        
+        # Bulk create options
+        if options_to_create:
+            QuestionOption.objects.bulk_create(options_to_create)
 
         return survey
     
