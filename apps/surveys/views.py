@@ -48,7 +48,6 @@ class DeviceTypeViewSet(ReadOnlyModelViewSet):
 
     throttle_classes = [
         AnonBurstThrottle,
-        AnonSustainedThrottle,
     ]
 
 class QuestionTypeViewSet(ReadOnlyModelViewSet):
@@ -64,7 +63,6 @@ class QuestionTypeViewSet(ReadOnlyModelViewSet):
     
     throttle_classes = [
         AnonBurstThrottle,
-        AnonSustainedThrottle,
     ]
 
 @extend_schema_view(
