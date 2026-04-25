@@ -166,3 +166,47 @@ class SurveyWriteSerializer(serializers.ModelSerializer):
 
         return survey
     
+    def update(self, instance, validated_data):
+        questions_data = validated_data.pop("questions", None)
+
+        # ── Update flat survey fields ─────────────────────────
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        instance.save()
+
+        # ── If questions not provided on PATCH, leave them alone
+        if questions_data is None:
+            return instance
+        
+        # ── Replace all questions on PUT/PATCH with questions ─
+        existing_ids = [q.get("id") for q in questions_data if q.get("id")]
+
+        # Delete questions not in the new payload
+        instance.questions.exclude(id__in=existing_ids).delete()
+
+        options_to_create = []
+
+        for q in questions_data:
+            q_id = q.pop("id", None)
+            options = q.pop("options", [])
+
+            if q_id:
+                # Update existing question
+                question = instance.questions.get(id=q_id)
+                for attr, value in q.items():
+                    setattr(question, attr, value)
+                question.save()
+                # Replace its options
+                question.options.all().delete()
+            else:
+                # Create new question
+                question = Question.objects.create(survey=instance, **q)
+            
+            for opt in options:
+                options_to_create.append(QuestionOption(question=question, **opt))
+        
+        if options_to_create:
+            QuestionOption.objects.bulk_create(options_to_create)
+        
+        return instance
