@@ -109,6 +109,7 @@ class QuestionWriteSerializer(serializers.ModelSerializer):
 
         CHOICE_TYPES = ['single_choice', 'checkboxes',]
         NUMERIC_TYPES = ['numeric', 'rating', 'scale']
+        FILE_TYPES    = ["file_upload"]
 
         # ── TEXT ─────────────────────
         if code == 'text':
@@ -154,6 +155,18 @@ class QuestionWriteSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     "min/max/max_length not allowed for choice types."
                 )
+            
+        # ── FILE UPLOAD ───────────────────────────────────────
+        elif code in FILE_TYPES:
+            if options:
+                raise serializers.ValidationError(
+                    "options not allowed for file_upload type."
+                )
+            
+            if min_value is not None or max_value is not None or max_length is not None:
+                raise serializers.ValidationError(
+                    "min/max/max_length not allowed for file_upload type."
+            )
 
         # ── DEFAULT STRICT MODE ──────
         else:
