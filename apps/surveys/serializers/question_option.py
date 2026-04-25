@@ -20,6 +20,7 @@ class QuestionOptionSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
+        read_only_fields = ["id", "created_at", "updated_at"]
 
 # ── Question Option: Write (create) ────────────────────────────
 class QuestionOptionWriteSerializer(serializers.ModelSerializer):

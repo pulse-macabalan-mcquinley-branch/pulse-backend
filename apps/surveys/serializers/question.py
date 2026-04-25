@@ -50,9 +50,10 @@ class QuestionSerializer(serializers.ModelSerializer):
 
 # ── Question: Write (create) ────────────────────────────
 class QuestionWriteSerializer(serializers.ModelSerializer):
-
+    
     type = serializers.PrimaryKeyRelatedField(
-        queryset=QuestionType.objects.all()
+        queryset=QuestionType.objects.all(),
+        required=False,
     )
     question_text = serializers.CharField(
         required=True,
@@ -82,12 +83,22 @@ class QuestionWriteSerializer(serializers.ModelSerializer):
             'max_length',
             'options',
         ]
-        read_only_fields = [
-            'id',
-        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # required on create (no instance), optional on update
+        if self.instance is None:
+            self.fields["type"].required = True
+        else:
+            self.fields["type"].required = False
 
     def validate(self, attrs):
-        qtype: QuestionType = attrs.get('type') or getattr(self.instance, 'type', None)
+        qtype: QuestionType = attrs.get("type") or getattr(self.instance, "type", None)
+
+        # ── PATCH without type field → skip type-dependent validation
+        if qtype is None:
+            return attrs
+        
         options = attrs.get('options')
 
         code = qtype.code.lower()
