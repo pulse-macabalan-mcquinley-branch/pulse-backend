@@ -42,39 +42,39 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  # worker:
-  # build:
-  # context: .
-  # target: builder
-  # command: celery -A celery_app.celery worker -l INFO --concurrency=4
-  # volumes:
-  # - .:/app
-  # env_file: .env
-  # environment:
-  # <<: *common-env
-  # depends_on:
-  # migrate:
-  # condition: service_completed_successfully
-  # redis:
-  # condition: service_healthy
-  # restart: unless-stopped
+  worker:
+    build:
+      context: .
+      target: builder
+    command: celery -A celery_app.celery worker -l INFO --concurrency=4
+    volumes:
+      - .:/app
+    env_file: .env
+    environment:
+      <<: *common-env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
 
-  # beat:
-  # build:
-  # context: .
-  # target: builder
-  # command: celery -A celery_app.celery beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
-  # volumes:
-  # - .:/app
-  # env_file: .env
-  # environment:
-  # <<: *common-env
-  # depends_on:
-  # migrate:
-  # condition: service_completed_successfully
-  # redis:
-  # condition: service_healthy
-  # restart: unless-stopped
+  beat:
+    build:
+      context: .
+      target: builder
+    command: celery -A celery_app.celery beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - .:/app
+    env_file: .env
+    environment:
+      <<: *common-env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
 
   db:
     image: postgres:16-alpine
