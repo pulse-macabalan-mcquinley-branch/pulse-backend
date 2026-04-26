@@ -60,7 +60,18 @@ class Survey(SoftDeleteModel):
     )
 
     published_at = models.DateTimeField(null=True, blank=True)
+    scheduled_publish_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Schedule automatic publishing at this time"
+    )
+    
     closes_at = models.DateTimeField(null=True, blank=True, help_text="Auto-close schedule")
+    scheduled_closed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Schedule automatic closing at this time"
+    )
 
     def __str__(self):
         return f"{self.title} → {self.created_by.full_name}"

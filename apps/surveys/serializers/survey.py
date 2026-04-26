@@ -33,6 +33,8 @@ class SurveyListSerializer(serializers.ModelSerializer):
             'allow_anonymous',
             'response_limit',
             'total_questions',
+            "scheduled_publish_at",
+            "scheduled_closed_at",
             'closes_at',
             'published_at',
             'created_at',
@@ -49,14 +51,9 @@ class SurveyDetailSerializer(SurveyListSerializer):
 
     class Meta(SurveyListSerializer.Meta):
         fields = SurveyListSerializer.Meta.fields + [
-            "created_by",
-            "offline_enabled",
-            "allow_anonymous",
-            "response_limit",
+            "description",
             "show_progress_bar",
             "one_response_per_user",
-            "published_at",
-            "closes_at",
             "questions",
             "responses",
         ]
@@ -86,14 +83,14 @@ class SurveyWriteSerializer(serializers.ModelSerializer):
         allow_null=True,
         required=False
     )
-
-    published_at = serializers.DateTimeField(
-        required=False,
-        allow_null=True
-    )
     closes_at = serializers.DateTimeField(
         required=False,
         allow_null=True
+    )
+
+    scheduled_publish_at = serializers.DateTimeField(
+        required=False,
+        allow_null=True,
     )
 
     questions = QuestionWriteSerializer(many=True, required=False)
@@ -109,8 +106,8 @@ class SurveyWriteSerializer(serializers.ModelSerializer):
             'allow_anonymous',
             'one_response_per_user',
             'response_limit',
+            'scheduled_publish_at',
             'closes_at',
-            'published_at',
             'questions',
             'created_at',
             'updated_at',
@@ -118,11 +115,19 @@ class SurveyWriteSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'id',
             'status',
+            'published_at',
             'created_at',
             'updated_at',
         ]
 
     # ── Field-level validation ────────────────────────
+    def validate_scheduled_publish_at(self, value):
+        if value and value <= timezone.now():
+            raise serializers.ValidationError(
+                "Scheduled publish date must be in the future."
+            )
+        return value
+
     def validate_closes_at(self, value):
         if value and value <= timezone.now():
             raise serializers.ValidationError("Close date must be in the future.")
@@ -235,4 +240,44 @@ class SurveyWriteSerializer(serializers.ModelSerializer):
         if options_to_create:
             QuestionOption.objects.bulk_create(options_to_create)
 
+        return instance
+    
+# ── Survey: Status transition ────────────────────────────────────
+class SurveyStatusSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Survey
+        fields = ["status"]
+
+    def validate_status(self, value):
+        current = self.instance.status
+        allowed_transitions = {
+            "draft":     ["published"],
+            "published": ["closed"],
+            "closed":    ["archived"],
+            "archived":  [],
+        }
+        if value not in allowed_transitions.get(current, []):
+            raise serializers.ValidationError(
+                f"Cannot transition from '{current}' to '{value}'."
+            )
+        return value
+
+    def update(self, instance, validated_data):
+        new_status = validated_data.get("status")
+
+        if new_status == "published":
+            instance.published_at = timezone.now()
+            # clear schedule — no longer needed
+            instance.scheduled_publish_at = None
+
+        if new_status == "closed":
+            # clear schedule — manually closed
+            instance.scheduled_closed_at = None
+
+        if new_status == "draft":
+            instance.published_at = None
+
+        instance.status = new_status
+        instance.save()
         return instance

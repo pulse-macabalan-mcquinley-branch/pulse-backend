@@ -25,11 +25,21 @@ app.conf.beat_schedule = {
         "task"     : "apps.notifications.tasks.send_weekly_digest",
         "schedule" : crontab(day_of_week=1, hour=8, minute=0),
     },
+    # ── Survey scheduling ──────────────────────────────────────
+    "publish-scheduled-surveys": {
+        "task":     "apps.surveys.tasks.publish_scheduled_surveys",
+        "schedule": crontab(minute="*"),   # every minute
+    },
+    "close-scheduled-surveys": {
+        "task":     "apps.surveys.tasks.close_scheduled_surveys",
+        "schedule": crontab(minute="*"),   # every minute
+    },
 }
 
 app.conf.task_routes = {
     "apps.users.tasks.*"         : {"queue": "default"},
     "apps.notifications.tasks.*" : {"queue": "notifications"},
+    "apps.surveys.tasks.*":       {"queue": "default"},
 }
 
 app.conf.broker_connection_retry_on_startup = True

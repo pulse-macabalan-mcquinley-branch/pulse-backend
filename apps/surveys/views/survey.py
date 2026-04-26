@@ -5,6 +5,7 @@ from ..serializers import (
     SurveyListSerializer,
     SurveyWriteSerializer,
     SurveyDetailSerializer,
+    SurveyStatusSerializer,
 )
 from ..models import (
     Survey,
@@ -40,6 +41,8 @@ class SurveyViewSet(ModelViewSet):
     list, retrieve      → any authenticated user
     create              → RESEARCHER role only
     update, destroy     → owner only
+    published           → AllowAny, filtered by allow_anonymous for unauth users
+    set_status          → owner only
     """
 
     pagination_class = StandardResultsPagination
@@ -50,9 +53,15 @@ class SurveyViewSet(ModelViewSet):
 
     # ── Queryset scoping ──────────────────────────────────────
     def get_queryset(self):
-        return Survey.objects.annotate(
-            total_questions=Count('questions')
-        )
+        qs = Survey.objects.annotate(total_questions=Count("questions"))
+        if self.action == "retrieve":
+            return qs.prefetch_related(
+                "questions__options",
+                "questions__type",
+                "responses__submitted_by",
+                "responses__device_type",
+            ).select_related("created_by")
+        return qs.select_related("created_by")
 
     def get_serializer_class(self):
         if self.action in ("create", "update", "partial_update"):
@@ -80,6 +89,7 @@ class SurveyViewSet(ModelViewSet):
     @action(detail=False, methods=["get"], url_path="published")
     def published(self, request):
         qs = Survey.objects.filter(
+            status=Survey.Status.PUBLISHED,
             published_at__isnull=False
         ).annotate(
             total_questions=Count("questions")
@@ -96,3 +106,19 @@ class SurveyViewSet(ModelViewSet):
         
         serializer = SurveyListSerializer(qs, many=True)
         return Response(serializer.data)
+    
+    # ── Status transition ─────────────────────────────────────
+    @extend_schema(summary="Transition survey status")
+    @action(detail=True, methods=["patch"], url_path="status")
+    def set_status(self, request, pk=None):
+        survey: Survey = self.get_object()  
+        serializer = SurveyStatusSerializer(
+            survey,
+            data=request.data,
+            partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            SurveyDetailSerializer(survey).data
+        )

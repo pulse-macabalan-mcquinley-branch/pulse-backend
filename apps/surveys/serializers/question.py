@@ -9,6 +9,7 @@ from .question_option import (
     QuestionOptionSerializer,
     QuestionOptionWriteSerializer,
 )
+from decimal import Decimal
 
 # ── Question ───────────────────────────────────────────────────────
 class QuestionTypeMiniSerializer(serializers.ModelSerializer):
@@ -65,6 +66,20 @@ class QuestionWriteSerializer(serializers.ModelSerializer):
         allow_null=True,
         allow_blank=True,
         max_length=500,
+    )
+
+    min_value = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        min_value=Decimal("0"),
+        allow_null=True,
+        required=False,
+    )
+    max_value = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        allow_null=True,
+        required=False,
     )
 
     options = QuestionOptionWriteSerializer(many=True, required=False)

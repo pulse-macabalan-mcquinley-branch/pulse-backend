@@ -2,7 +2,7 @@ from .base import QuestionTypeSerializer, DeviceTypeSerializer
 from .question_option import QuestionOptionSerializer, QuestionOptionWriteSerializer
 from .question import QuestionSerializer, QuestionWriteSerializer
 from .response import AnswerSerializer, ResponseSerializer
-from .survey import SurveyListSerializer, SurveyDetailSerializer, SurveyWriteSerializer
+from .survey import SurveyListSerializer, SurveyDetailSerializer, SurveyWriteSerializer, SurveyStatusSerializer
 
 __all__ = [
     "QuestionTypeSerializer",
@@ -16,4 +16,5 @@ __all__ = [
     "SurveyListSerializer",
     "SurveyDetailSerializer",
     "SurveyWriteSerializer",
+    "SurveyStatusSerializer",
 ]
