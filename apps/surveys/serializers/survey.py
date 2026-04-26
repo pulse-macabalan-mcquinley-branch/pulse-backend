@@ -34,6 +34,7 @@ class SurveyListSerializer(serializers.ModelSerializer):
             'response_limit',
             'total_questions',
             'closes_at',
+            'published_at',
             'created_at',
         ]
         read_only_fields = fields
@@ -85,6 +86,11 @@ class SurveyWriteSerializer(serializers.ModelSerializer):
         allow_null=True,
         required=False
     )
+
+    published_at = serializers.DateTimeField(
+        required=False,
+        allow_null=True
+    )
     closes_at = serializers.DateTimeField(
         required=False,
         allow_null=True
@@ -104,6 +110,7 @@ class SurveyWriteSerializer(serializers.ModelSerializer):
             'one_response_per_user',
             'response_limit',
             'closes_at',
+            'published_at',
             'questions',
             'created_at',
             'updated_at',
@@ -121,6 +128,13 @@ class SurveyWriteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Close date must be in the future.")
         return value
     
+    def validate_published_at(self, value):
+        if value and value < timezone.now():
+            raise serializers.ValidationError(
+                "Published date cannot be in the past"
+            )
+        return value
+    
     # ── Object-level validation ───────────────────────
     def validate(self, attrs: dict) -> dict:
         # Merge with existing instance values on PATCH so partial updates
@@ -131,6 +145,20 @@ class SurveyWriteSerializer(serializers.ModelSerializer):
         if anonymous and one_per_user:
             raise serializers.ValidationError(
                 "allow_anonymous and one_response_per_user are mutually exclusive."
+            )
+
+        # ── published_at vs closes_at ─────────────────────────
+        published_at = attrs.get(
+            "published_at",
+            getattr(self.instance, "published_at", None)
+        )
+        closes_at = attrs.get(
+            "closes_at",
+            getattr(self.instance, "closes_at", None)
+        )
+        if published_at and closes_at and closes_at <= published_at:
+            raise serializers.ValidationError(
+                "closes_at must be after published_at"
             )
 
         return attrs

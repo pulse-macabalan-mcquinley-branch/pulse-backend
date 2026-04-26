@@ -13,7 +13,8 @@ from apps.users.models import (
     CustomUser
 )
 from rest_framework.permissions import (
-    IsAuthenticated
+    IsAuthenticated,
+    AllowAny
 )
 
 from drf_spectacular.utils import extend_schema, extend_schema_view
@@ -23,6 +24,8 @@ from core.permissions import (
 )
 from core.pagination import StandardResultsPagination
 from django.db.models import Count
+from rest_framework.response import Response
+from rest_framework.decorators import action
 
 @extend_schema_view(
     create=extend_schema(summary="Create a new survey"),
@@ -60,6 +63,8 @@ class SurveyViewSet(ModelViewSet):
     
     # ── Permissions ───────────────────────────────────────────
     def get_permissions(self):
+        if self.action == "published":
+            return [AllowAny()]
         if self.action == "create":
             return [IsAuthenticated(), RolePermission()]
         if self.action in ["update", "partial_update", "destroy"]:
@@ -69,3 +74,25 @@ class SurveyViewSet(ModelViewSet):
     # ── Set created by automatically on create ───────────────────
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
+
+    # ── Published surveys (public) ────────────────────────────
+    @extend_schema(summary="List published surveys - auth depends on allow_anonymous")
+    @action(detail=False, methods=["get"], url_path="published")
+    def published(self, request):
+        qs = Survey.objects.filter(
+            published_at__isnull=False
+        ).annotate(
+            total_questions=Count("questions")
+        ).select_related("created_by").order_by("-published_at")
+
+        # ── Unauthenticated → only show allow_anonymous surveys ──
+        if not request.user.is_authenticated:
+            qs = qs.filter(allow_anonymous=True)
+        
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = SurveyListSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = SurveyListSerializer(qs, many=True)
+        return Response(serializer.data)
