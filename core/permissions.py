@@ -1,5 +1,6 @@
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 from apps.users.models import (CustomUser)
+from django.shortcuts import get_object_or_404
 
 class IsOwner(BasePermission):
     """
@@ -83,3 +84,10 @@ class IsResearcher(BasePermission):
     
     def has_object_permission(self, request, view, obj):
         return obj.created_by == request.user
+
+class IsSurveyOwner(BasePermission):
+    """For nested routes — checks ownership of the parent survey."""
+    def has_permission(self, request, view):
+        from apps.surveys.models import Survey
+        survey = get_object_or_404(Survey, pk=view.kwargs.get("survey_pk"))
+        return survey.created_by == request.user
