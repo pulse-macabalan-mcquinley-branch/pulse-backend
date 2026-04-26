@@ -75,35 +75,40 @@ class Command(BaseCommand):
     # ── Wipe ─────────────────────────────────────────────────
     def _wipe(self):
         self.stdout.write("  Wiping existing seed data...")
-        from apps.posts.models import Post, Tag
-        from apps.notifications.models import Notification
+        # from apps.notifications.models import Notification
+        from apps.surveys.models import (
+            Survey, Question, QuestionOption,
+            Response, Answer,
+        )
 
-        Notification.objects.all().delete()
-        Post.objects.all().delete()
-        Tag.objects.all().delete()
+        Answer.objects.all().delete()
+        Response.objects.all().delete()
+        QuestionOption.objects.all().delete()
+        Question.objects.all().delete()
+        Survey.objects.all().delete()
+        # Notification.objects.all().delete()
         User.objects.filter(is_superuser=False).delete()
         self.stdout.write(self.style.WARNING("  ⚠  Seed data cleared."))
 
     # ── Development seed ──────────────────────────────────────
     def _seed_development(self, user_count, post_count):
-        
-        self.stdout.write("  [1/4] Seeding superadmin...")
+        self.stdout.write("  [1/6] Seeding superadmin...")
         self._ensure_superadmin()
 
-        self.stdout.write(f"  [2/4] Seeding {user_count} users...")
+        self.stdout.write(f"  [2/6] Seeding {user_count} users...")
         call_command("seed_users", count=user_count, verbosity=0)
 
-        self.stdout.write("  [3/4] Seeding question types...")
+        self.stdout.write("  [3/6] Seeding question types...")
         call_command("seed_question_types", verbosity=0)
 
-        self.stdout.write("  [4/4] Seeding device types...")
+        self.stdout.write("  [4/6] Seeding device types...")
         call_command("seed_device_types", verbosity=0)
 
-        """ self.stdout.write("  [3/4] Seeding notifications...")
-        call_command("seed_notifications", verbosity=0) """
+        self.stdout.write("  [5/6] Seeding surveys...")
+        call_command("seed_surveys", count=10, verbosity=0)
 
-        """ self.stdout.write(f"  [3/5] Seeding {post_count} posts...")
-        call_command("seed_posts", count=post_count, verbosity=0) """
+        self.stdout.write("  [6/6] Seeding responses...")
+        call_command("seed_responses", count=50, verbosity=0)
 
     # ── Production seed (safe, idempotent) ───────────────────
     def _seed_production(self):
